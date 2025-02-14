@@ -15,7 +15,7 @@ export const VectorizeEmbed = async () => {
 
     const pinecone = new PineconeClient();
     const vectorStore = new PineconeStore(embeddings, {
-      pineconeIndex: pinecone.Index("seek-index"),
+      pineconeIndex: pinecone.Index(process.env.PINECONE_INDEX || ""),
     });
 
     const json_doc = readFileSync(

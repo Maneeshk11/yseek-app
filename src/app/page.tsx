@@ -6,25 +6,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SearchState } from "@/lib/constants";
 
 export default function Home() {
-  const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [searchState, setSearchState] = useState<SearchState>(SearchState.IDLE);
 
   const [companies, setCompanies] = useState<Company[]>([]);
 
   return (
     <div
       className={`grid grid-rows-[20px_1fr_20px] ${
-        hasSearched ? "items-start" : "items-center"
+        searchState === SearchState.IDLE ? "items-center" : "items-start"
       } justify-items-center min-h-screen p-6 pb-20 gap-16 sm:pb-10 sm:pt-6 font-[family-name:var(--font-geist-sans)]`}
     >
       <main className={`flex flex-col gap-8 row-start-2 items-center w-full`}>
@@ -39,12 +33,30 @@ export default function Home() {
               height={60}
             />
           </div>
-          <span className="font-medium">Search for YC companies with AI</span>
+          <span className="font-medium">
+            Search for YC backed companies with AI
+          </span>
         </div>
         <SearchComponent
           setCompanies={setCompanies}
-          setHasSearched={setHasSearched}
+          setSearchState={setSearchState}
         />
+
+        <span className="text-wrap text-orange-600">
+          {searchState === SearchState.SEARCHING ? (
+            <span className=" animate-pulse">Searching ...</span>
+          ) : searchState === SearchState.NORESULT ? (
+            "Sorry, couldn't find any comapnies"
+          ) : searchState === SearchState.ERROR ? (
+            "Error fetching Companies, try again later"
+          ) : (
+            searchState === SearchState.IDLE && (
+              <div className="typed-out overflow-hidden text-center">
+                Try: Give me companies that simplify trucker workflows
+              </div>
+            )
+          )}
+        </span>
 
         <div className="grid sm:grid-cols-2 gap-6 w-fit">
           {Array.isArray(companies) &&
@@ -72,7 +84,15 @@ export default function Home() {
                   </CardContent>
                   <CardFooter className="flex flex-wrap gap-2">
                     {company.tags.map((tag, _) => {
-                      return <Badge key={tag} variant="outline" className="text-nowrap rounded-full">{tag}</Badge>;
+                      return (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="text-nowrap rounded-full"
+                        >
+                          {tag}
+                        </Badge>
+                      );
                     })}
                   </CardFooter>
                 </Card>

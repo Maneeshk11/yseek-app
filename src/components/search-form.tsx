@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { set, z } from "zod";
 import { Input } from "./ui/input";
 import { Form, FormControl, FormField, FormItem } from "./ui/form";
 import { Company, SearchSchema } from "@/lib/schema";
@@ -8,13 +8,14 @@ import { ArrowUp } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dispatch, FC, SetStateAction } from "react";
 import axios from "axios";
+import { SearchState } from "@/lib/constants";
 
 interface SearchProps {
-  setHasSearched: Dispatch<SetStateAction<boolean>>;
+  setSearchState: Dispatch<SetStateAction<SearchState>>;
   setCompanies: Dispatch<SetStateAction<Company[]>>;
 }
 
-const SearchComponent: FC<SearchProps> = ({ setHasSearched, setCompanies }) => {
+const SearchComponent: FC<SearchProps> = ({ setSearchState, setCompanies }) => {
   const form = useForm<z.infer<typeof SearchSchema>>({
     resolver: zodResolver(SearchSchema),
     defaultValues: {
@@ -23,15 +24,22 @@ const SearchComponent: FC<SearchProps> = ({ setHasSearched, setCompanies }) => {
   });
 
   const onSubmit = async (values: z.infer<typeof SearchSchema>) => {
-    setHasSearched(true);
+    setSearchState(SearchState.SEARCHING);
     try {
       const res = await axios.post("/api/search", values, {
         headers: {
           "Content-Type": "application/json",
         },
       });
-      setCompanies(res.data.response)
+      const companies: Company[] = res.data.response;
+      if (companies.length === 0) {
+        setSearchState(SearchState.NORESULT);
+      } else {
+        setSearchState(SearchState.SUCCESS);
+      }
+      setCompanies(companies);
     } catch (error: any) {
+      setSearchState(SearchState.ERROR);
       console.log("error fetching: ", error);
     }
   };
@@ -40,7 +48,7 @@ const SearchComponent: FC<SearchProps> = ({ setHasSearched, setCompanies }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex items-center group justify-between border-2 rounded-3xl border-orange-200 group-focus-within:border-orange-600 transition-colors"
+        className="flex items-center group justify-between border-2 rounded-3xl border-orange-200 group-focus-within:border-orange-600 transition-colors w-full sm:w-fit"
       >
         <FormField
           name="prompt"
@@ -49,7 +57,7 @@ const SearchComponent: FC<SearchProps> = ({ setHasSearched, setCompanies }) => {
               <FormControl>
                 <Input
                   placeholder="Search"
-                  className=" w-full sm:w-[34rem] p-6 border-0 focus:outline-none"
+                  className=" sm:w-[34rem] p-6 border-0 focus:outline-none"
                   {...field}
                 />
               </FormControl>
